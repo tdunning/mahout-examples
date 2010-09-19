@@ -190,16 +190,17 @@ public class TrainNewsGroups {
     }
     learningAlgorithm.close();
 
-    dissect(leakType, newsGroups, learningAlgorithm, files, k);
+    dissect(leakType, newsGroups, learningAlgorithm, files);
   }
 
-  private static void dissect(int leakType, Dictionary newsGroups, AdaptiveLogisticRegression learningAlgorithm, List<File> files, int k) throws IOException {
+  private static void dissect(int leakType, Dictionary newsGroups, AdaptiveLogisticRegression learningAlgorithm, List<File> files) throws IOException {
     Map<String, Set<Integer>> traceDictionary = Maps.newTreeMap();
     System.out.printf("starting dissection\n");
     ModelDissector md = new ModelDissector(learningAlgorithm.getBest().getPayload().getLearner().numCategories());
 
     encoder.setTraceDictionary(traceDictionary);
     bias.setTraceDictionary(traceDictionary);
+    int k = 0;
     for (File file : permute(files, rand).subList(0, 500)) {
       String ng = file.getParentFile().getName();
       int actual = newsGroups.intern(ng);
@@ -207,6 +208,10 @@ public class TrainNewsGroups {
       traceDictionary.clear();
       Vector v = encodeFeatureVector(file, actual, leakType);
       md.update(v, traceDictionary, learningAlgorithm.getBest().getPayload().getLearner());
+      k++;
+      if (k % 50 == 0) {
+        System.out.printf("%d\t%d\n", k, traceDictionary.size());
+      }
     }
 
     List<String> ngNames = Lists.newArrayList(newsGroups.values());
