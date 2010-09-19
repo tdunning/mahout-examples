@@ -1,4 +1,4 @@
-package org.apache.mahout.classifier.sgd;
+package com.manning.chapter15;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ConcurrentHashMultiset;
@@ -10,6 +10,10 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.apache.lucene.util.Version;
+import org.apache.mahout.classifier.sgd.AdaptiveLogisticRegression;
+import org.apache.mahout.classifier.sgd.CrossFoldLearner;
+import org.apache.mahout.classifier.sgd.L1;
+import org.apache.mahout.classifier.sgd.ModelDissector;
 import org.apache.mahout.ep.State;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;

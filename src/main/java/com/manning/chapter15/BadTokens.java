@@ -15,8 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA. User: tdunning Date: Sep 19, 2010 Time: 2:08:07 PM To change this
- * template use File | Settings | File Templates.
+ * Example of bad tokenization that would tank a classifier.
  */
 public class BadTokens {
   public static void main(String[] args) throws IOException {
