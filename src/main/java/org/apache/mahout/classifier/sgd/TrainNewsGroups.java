@@ -202,12 +202,15 @@ public class TrainNewsGroups {
     bias.setTraceDictionary(traceDictionary);
     int k = 0;
     for (File file : permute(files, rand).subList(0, 500)) {
+      System.out.printf("a\n");
       String ng = file.getParentFile().getName();
       int actual = newsGroups.intern(ng);
 
       traceDictionary.clear();
       Vector v = encodeFeatureVector(file, actual, leakType);
+      System.out.printf("b\n");
       md.update(v, traceDictionary, learningAlgorithm.getBest().getPayload().getLearner());
+      System.out.printf("c\n");
       k++;
       if (k % 50 == 0) {
         System.out.printf("%d\t%d\n", k, traceDictionary.size());
