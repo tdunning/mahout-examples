@@ -33,7 +33,7 @@
   <repositories>
     <repository>
       <id>apache</id>
-      <url>http://repository.apache.org</url>
+      <url>https://repository.apache.org</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>

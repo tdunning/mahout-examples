@@ -111,7 +111,7 @@ public class TrainNewsGroups {
       String ng = file.getParentFile().getName();
       int actual = newsGroups.intern(ng);
 
-      Vector v = encodeFeatureVector(file, actual, k, leakType);
+      Vector v = encodeFeatureVector(file, actual, leakType);
       learningAlgorithm.train(actual, v);
 
       State<AdaptiveLogisticRegression.Wrapper> tmp = learningAlgorithm.getBest();
@@ -150,6 +150,9 @@ public class TrainNewsGroups {
       }
 
       k++;
+      if (k > 4000) {
+        break;
+      }
 
       int bump = bumps[(int) Math.floor(step) % bumps.length];
       int scale = (int) Math.pow(10, Math.floor(step / bumps.length));
@@ -205,7 +208,7 @@ public class TrainNewsGroups {
       int actual = newsGroups.intern(ng);
 
       traceDictionary.clear();
-      Vector v = encodeFeatureVector(file, actual, k, leakType);
+      Vector v = encodeFeatureVector(file, actual, leakType);
       md.update(v, traceDictionary, learningAlgorithm.getBest().getPayload().getLearner());
     }
 
@@ -217,7 +220,7 @@ public class TrainNewsGroups {
 
   }
 
-  private static Vector encodeFeatureVector(File file, int actual, int recordNumber, int leakType) throws IOException {
+  private static Vector encodeFeatureVector(File file, int actual, int leakType) throws IOException {
     long date = (long) (1000 * (DATE_REFERENCE + actual * MONTH + 1 * WEEK * rand.nextDouble()));
     Multiset<String> words = ConcurrentHashMultiset.create();
 
