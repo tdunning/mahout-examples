@@ -107,7 +107,7 @@ public class TrainNewsGroups {
     int k = 0;
     double step = 0;
     int[] bumps = new int[]{1, 2, 5};
-    for (File file : permute(files, rand)) {
+    for (File file : permute(files, rand).subList(0, 1000)) {
       String ng = file.getParentFile().getName();
       int actual = newsGroups.intern(ng);
 
@@ -150,9 +150,6 @@ public class TrainNewsGroups {
       }
 
       k++;
-      if (k > 4000) {
-        break;
-      }
 
       int bump = bumps[(int) Math.floor(step) % bumps.length];
       int scale = (int) Math.pow(10, Math.floor(step / bumps.length));
@@ -198,7 +195,7 @@ public class TrainNewsGroups {
 
   private static void dissect(int leakType, Dictionary newsGroups, AdaptiveLogisticRegression learningAlgorithm, List<File> files, int k) throws IOException {
     Map<String, Set<Integer>> traceDictionary = Maps.newTreeMap();
-
+    System.out.printf("starting dissection\n");
     ModelDissector md = new ModelDissector(learningAlgorithm.getBest().getPayload().getLearner().numCategories());
 
     encoder.setTraceDictionary(traceDictionary);
