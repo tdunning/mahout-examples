@@ -16,6 +16,13 @@ import java.util.List;
 
 /**
  * Example of bad tokenization that would tank a classifier.
+ *
+ * Assumes that the 20 newsgroup test data from Jason Rennie has been
+ * loaded in the directory above our home directory.  To download
+ * that directory, try this
+ *
+ * url=http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
+ * curl $url | tar zxf -
  */
 public class BadTokens {
   public static void main(String[] args) throws IOException {

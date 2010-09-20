@@ -44,23 +44,44 @@ import java.util.Set;
  * data.  The optional second argument, leakType, defines which classes of features to use.
  * Importantly, leakType controls whether a synthetic date is injected into the data as
  * a target leak and if so, how.
- *
+ * <p>
  * The value of leakType % 3 determines whether the target leak is injected according to
  * the following table:
+ * <p>
  * <table>
- * <tr><td>0</td><td>No leak injected</td></tr>
- * <tr><td>1</td><td>Synthetic date injected in MMM-yyyy format. This will be a single token and
+ * <tr><td valign='top'>0</td><td>No leak injected</td></tr>
+ * <tr><td valign='top'>1</td><td>Synthetic date injected in MMM-yyyy format. This will be a single token and
  * is a perfect target leak since each newsgroup is given a different month</td></tr>
- * <tr><td>2</td><td>Synthetic date injected in dd-MMM-yyyy HH:mm:ss format.  The day varies
+ * <tr><td valign='top'>2</td><td>Synthetic date injected in dd-MMM-yyyy HH:mm:ss format.  The day varies
  * and thus there are more leak symbols that need to be learned.  Ultimately this is just
  * as big a leak as case 1.</td></tr>
  * </table>
+ * <p>
  * Leaktype also determines what other text will be indexed.  If leakType is greater
  * than or equal to 6, then neither headers nor text body will be used for features and the leak is the only
  * source of data.  If leakType is greater than or equal to 3, then subject words will be used as features.
  * If leakType is less than 3, then both subject and body text will be used as features.
- *
- * A leakType of 0 gives no leak and all textual features. 
+ * <p>
+ * A leakType of 0 gives no leak and all textual features.
+ * <p>
+ * See the following table for a summary of commonly used values for leakType
+ * <p>
+ * <table>
+ * <tr><td><b>leakType</b></td><td><b>Leak?</b></td><td><b>Subject?</b></td><td><b>Body?</b></td></tr>
+ * <tr><td colspan=4><hr></td></tr>
+ * <tr><td>0</td><td>no</td><td>yes</td><td>yes</td></tr>
+ * <tr><td>1</td><td>mmm-yyyy</td><td>yes</td><td>yes</td></tr>
+ * <tr><td>2</td><td>dd-mmm-yyyy</td><td>yes</td><td>yes</td></tr>
+ * <tr><td colspan=4><hr></td></tr>
+ * <tr><td>3</td><td>no</td><td>yes</td><td>no</td></tr>
+ * <tr><td>4</td><td>mmm-yyyy</td><td>yes</td><td>no</td></tr>
+ * <tr><td>5</td><td>dd-mmm-yyyy</td><td>yes</td><td>no</td></tr>
+ * <tr><td colspan=4><hr></td></tr>
+ * <tr><td>6</td><td>no</td><td>no</td><td>no</td></tr>
+ * <tr><td>7</td><td>mmm-yyyy</td><td>no</td><td>no</td></tr>
+ * <tr><td>8</td><td>dd-mmm-yyyy</td><td>no</td><td>no</td></tr>
+ * <tr><td colspan=4><hr></td></tr>
+ * </table>
  */
 public class TrainNewsGroups {
   private static final int FEATURES = 10000;
@@ -120,12 +141,10 @@ public class TrainNewsGroups {
 
       State<AdaptiveLogisticRegression.Wrapper> tmp = learningAlgorithm.getBest();
       CrossFoldLearner state = null;
-      if (tmp != null) {
-        state = tmp.getPayload().getLearner();
-      }
       double ll;
       int estimated;
-      if (state != null) {
+      if (tmp != null) {
+        state = tmp.getPayload().getLearner();
         ll = state.logLikelihood(actual, v);
 
         double mu = Math.min(k + 1, 200);
@@ -146,7 +165,7 @@ public class TrainNewsGroups {
         }
       } else {
         estimated = 0;
-        
+
         ll = Double.NaN;
         averageLL = Double.NaN;
 
@@ -162,26 +181,26 @@ public class TrainNewsGroups {
       double nonZeros;
       double positive;
       double norm;
-      if (best != null) {
-        maxBeta = best.getPayload().getLearner().getModels().get(0).getBeta().aggregate(Functions.MAX, Functions.IDENTITY);
-        nonZeros = best.getPayload().getLearner().getModels().get(0).getBeta().aggregate(Functions.PLUS, new UnaryFunction() {
+      if (state != null) {
+        maxBeta = state.getModels().get(0).getBeta().aggregate(Functions.MAX, Functions.IDENTITY);
+        nonZeros = state.getModels().get(0).getBeta().aggregate(Functions.PLUS, new UnaryFunction() {
           @Override
           public double apply(double v) {
-            return Math.abs(v) > 1e-9 ? 1 : 0;
+            return Math.abs(v) > 1e-6 ? 1 : 0;
           }
         });
-        positive = best.getPayload().getLearner().getModels().get(0).getBeta().aggregate(Functions.PLUS, new UnaryFunction() {
+        positive = state.getModels().get(0).getBeta().aggregate(Functions.PLUS, new UnaryFunction() {
           @Override
           public double apply(double v) {
             return v > 0 ? 1 : 0;
           }
         });
-        norm = best.getPayload().getLearner().getModels().get(0).getBeta().aggregate(Functions.PLUS, Functions.ABS);
+        norm = state.getModels().get(0).getBeta().aggregate(Functions.PLUS, Functions.ABS);
       } else {
-        maxBeta = Double.NaN;
+        maxBeta = 0;
         nonZeros = 0;
         positive = 0;
-        norm = Double.NaN;
+        norm = 0;
       }
       if (k % (bump * scale) == 0) {
         step += 0.25;
@@ -231,12 +250,15 @@ public class TrainNewsGroups {
 
   private static Vector encodeFeatureVector(File file, int actual, int leakType) throws IOException {
     long date = (long) (1000 * (DATE_REFERENCE + actual * MONTH + 1 * WEEK * rand.nextDouble()));
+    System.out.println("a1");
     Multiset<String> words = ConcurrentHashMultiset.create();
 
     BufferedReader reader = new BufferedReader(new FileReader(file));
     String line = reader.readLine();
+    System.out.println("a2");
     Reader dateString = new StringReader(df[leakType % 3].format(new Date(date)));
     countWords(analyzer, words, dateString);
+    System.out.println("a3");
     while (line != null && line.length() > 0) {
       boolean countHeader = (
         line.startsWith("From:") || line.startsWith("Subject:") ||
@@ -249,16 +271,20 @@ public class TrainNewsGroups {
         line = reader.readLine();
       } while (line.startsWith(" "));
     }
+    System.out.println("a4");
     if (leakType < 3) {
       countWords(analyzer, words, reader);
     }
     reader.close();
+    System.out.println("a5");
 
     Vector v = new RandomAccessSparseVector(FEATURES);
     bias.addToVector("", 1, v);
     for (String word : words.elementSet()) {
       encoder.addToVector(word, Math.log(1 + words.count(word)), v);
     }
+    System.out.println("a6");
+
     return v;
   }
 
