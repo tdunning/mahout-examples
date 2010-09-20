@@ -214,6 +214,7 @@ public class TrainNewsGroups {
     learningAlgorithm.close();
 
     dissect(leakType, newsGroups, learningAlgorithm, files);
+    System.out.println("exiting main");
   }
 
   private static void dissect(int leakType, Dictionary newsGroups, AdaptiveLogisticRegression learningAlgorithm, List<File> files) throws IOException {
@@ -225,17 +226,12 @@ public class TrainNewsGroups {
     bias.setTraceDictionary(traceDictionary);
     int k = 0;
     for (File file : permute(files, rand).subList(0, 500)) {
-      System.out.printf("a\n");
       String ng = file.getParentFile().getName();
       int actual = newsGroups.intern(ng);
 
       traceDictionary.clear();
-      System.out.println("a0");
       Vector v = encodeFeatureVector(file, actual, leakType);
-      System.out.printf("b\n");
       md.update(v, traceDictionary, learningAlgorithm.getBest().getPayload().getLearner());
-      System.out.printf("c\n");
-      k++;
       if (k % 50 == 0) {
         System.out.printf("%d\t%d\n", k, traceDictionary.size());
       }
@@ -246,21 +242,16 @@ public class TrainNewsGroups {
     for (ModelDissector.Weight w : weights) {
       System.out.printf("%s\t%.1f\t%s\n", w.getFeature(), w.getWeight(), ngNames.get(w.getMaxImpact() + 1));
     }
-
   }
 
   private static Vector encodeFeatureVector(File file, int actual, int leakType) throws IOException {
-    System.out.println("into encodeFeatureVector");
     long date = (long) (1000 * (DATE_REFERENCE + actual * MONTH + 1 * WEEK * rand.nextDouble()));
-    System.out.println("a1");
     Multiset<String> words = ConcurrentHashMultiset.create();
 
     BufferedReader reader = new BufferedReader(new FileReader(file));
     String line = reader.readLine();
-    System.out.println("a2");
     Reader dateString = new StringReader(df[leakType % 3].format(new Date(date)));
     countWords(analyzer, words, dateString);
-    System.out.println("a3");
     while (line != null && line.length() > 0) {
       boolean countHeader = (
         line.startsWith("From:") || line.startsWith("Subject:") ||
@@ -273,19 +264,16 @@ public class TrainNewsGroups {
         line = reader.readLine();
       } while (line.startsWith(" "));
     }
-    System.out.println("a4");
     if (leakType < 3) {
       countWords(analyzer, words, reader);
     }
     reader.close();
-    System.out.println("a5");
 
     Vector v = new RandomAccessSparseVector(FEATURES);
     bias.addToVector("", 1, v);
     for (String word : words.elementSet()) {
       encoder.addToVector(word, Math.log(1 + words.count(word)), v);
     }
-    System.out.println("a6");
 
     return v;
   }
