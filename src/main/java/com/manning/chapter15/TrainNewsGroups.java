@@ -230,6 +230,7 @@ public class TrainNewsGroups {
       int actual = newsGroups.intern(ng);
 
       traceDictionary.clear();
+      System.out.println("a0");
       Vector v = encodeFeatureVector(file, actual, leakType);
       System.out.printf("b\n");
       md.update(v, traceDictionary, learningAlgorithm.getBest().getPayload().getLearner());
@@ -249,6 +250,7 @@ public class TrainNewsGroups {
   }
 
   private static Vector encodeFeatureVector(File file, int actual, int leakType) throws IOException {
+    System.out.println("into encodeFeatureVector");
     long date = (long) (1000 * (DATE_REFERENCE + actual * MONTH + 1 * WEEK * rand.nextDouble()));
     System.out.println("a1");
     Multiset<String> words = ConcurrentHashMultiset.create();
